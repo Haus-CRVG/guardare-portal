@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haus Backup | Portal do Cliente</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ===================== LOGIN ===================== -->
+<div id="view-login" class="tela-central">
+    <div class="aceite-box" style="max-width:380px;">
+        <div class="logo-topo">🛡️ Haus Backup<span style="display:block; font-size:12px; font-weight:normal; color:var(--muted); margin-top:4px;">Portal do Cliente</span></div>
+        <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="login-email" placeholder="seuemail@empresa.com">
+        </div>
+        <div class="form-group">
+            <label>Senha</label>
+            <input type="password" id="login-senha" placeholder="••••••••" onkeydown="if(event.key==='Enter') fazerLogin()">
+        </div>
+        <div id="login-erro" style="display:none; color:var(--danger); font-size:13px; margin-bottom:12px;"></div>
+        <button class="btn-primary" style="width:100%;" onclick="fazerLogin()">Entrar</button>
+    </div>
+</div>
+
+<!-- ===================== TELA DE CARREGANDO ===================== -->
+<div id="view-carregando" class="tela-central" style="display:none;">
+    <div style="color:var(--muted); font-size:14px;">Carregando...</div>
+</div>
+
+<!-- ===================== MENSAGEM (status inesperado / cancelado / erro) ===================== -->
+<div id="view-mensagem" class="tela-central" style="display:none;">
+    <div class="aceite-box" style="max-width:420px; text-align:center;">
+        <div class="logo-topo">🛡️ Haus Backup</div>
+        <p id="mensagem-texto" style="color:var(--text); font-size:14px;"></p>
+        <button class="btn-secondary" onclick="fazerLogout()">Sair</button>
+    </div>
+</div>
+
+<!-- ===================== TELA DE ACEITE (fluxo de primeiro acesso) ===================== -->
+<div id="tela-aceite" style="display:none;">
+    <div class="logo-topo">🛡️ Haus Backup</div>
+    <div class="aceite-progress">
+        <div class="step" id="prog-1"></div>
+        <div class="step" id="prog-2"></div>
+        <div class="step" id="prog-3"></div>
+    </div>
+
+    <!-- Passo 1: dados e termos -->
+    <div id="aceite-passo-1" class="aceite-box">
+        <h2>Confirme seus dados e aceite o contrato</h2>
+        <div class="info-grid" id="aceite-dados-grid" style="margin-bottom:20px;"></div>
+        <label class="checkbox-line">
+            <input type="checkbox" id="chk-termos">
+            <span>Li e estou ciente de todos os termos do <a href="#" onclick="return false;">Contrato de Licença para Usuário Final (EULA)</a>.</span>
+        </label>
+        <button class="btn-primary" onclick="avancarAceite(1)">Avançar</button>
+    </div>
+
+    <!-- Passo 2: perfis de backup -->
+    <div id="aceite-passo-2" class="aceite-box" style="display:none">
+        <h2>Confirme os dados técnicos do backup</h2>
+        <p style="color:var(--muted); font-size:14px;">Estes são os itens que serão protegidos, conforme configurado na implantação:</p>
+        <div id="aceite-perfis-lista"></div>
+        <label class="checkbox-line">
+            <input type="checkbox" id="chk-tecnicos">
+            <span>Confirmo que os dados técnicos acima estão corretos.</span>
+        </label>
+        <button class="btn-primary" onclick="avancarAceite(2)">Avançar</button>
+    </div>
+
+    <!-- Passo 3: definir senha -->
+    <div id="aceite-passo-3" class="aceite-box" style="display:none">
+        <h2>Defina sua senha de acesso</h2>
+        <p style="color:var(--muted); font-size:14px;">Este acesso será usado nas próximas vezes que você entrar no portal.</p>
+        <div class="form-group">
+            <label>Nova senha</label>
+            <input type="password" id="nova-senha" placeholder="Mínimo 6 caracteres">
+        </div>
+        <div class="form-group">
+            <label>Confirmar senha</label>
+            <input type="password" id="confirma-senha">
+        </div>
+        <div id="aceite-erro" style="display:none; color:var(--danger); font-size:13px; margin-bottom:12px;"></div>
+        <button class="btn-primary" onclick="concluirAceite()">Concluir e Acessar o Portal</button>
+    </div>
+</div>
+
+<!-- ===================== PORTAL DO CLIENTE (pós-aceite) ===================== -->
+<div id="app-portal" style="display:none">
+    <div class="sidebar">
+        <div class="logo">🛡️ Haus Backup<small>Portal do Cliente</small></div>
+        <nav>
+            <div class="nav-item active" data-tab="contrato" onclick="mudarPagina('contrato')">📄 Meu Contrato</div>
+            <div class="nav-item" data-tab="backups" onclick="mudarPagina('backups')">☁️ Meus Backups</div>
+            <div class="nav-item" data-tab="chamados" onclick="mudarPagina('chamados')">🎫 Meus Chamados <span id="badge-chamados-cliente" class="badge-nao-lida" style="display:none;">0</span></div>
+            <div class="nav-item" data-tab="financeiro" onclick="mudarPagina('financeiro')">💰 Meu Financeiro</div>
+            <div class="nav-item" data-tab="alertas" onclick="mudarPagina('alertas')">🔔 Meus Alertas</div>
+        </nav>
+        <div class="user-box">
+            <span id="user-box-email">-</span><br>
+            <a href="#" style="color:#94a3b8;" onclick="fazerLogout(); return false;">Sair</a>
+        </div>
+    </div>
+
+    <div class="main-area">
+
+        <!-- Meu Contrato -->
+        <div id="pagina-contrato">
+            <h1 class="page-title">Meu Contrato</h1>
+            <div class="page-subtitle" id="contrato-status-linha">-</div>
+
+            <div class="card">
+                <h3>Serviço Contratado</h3>
+                <div class="info-grid" id="contrato-servico-grid"></div>
+            </div>
+
+            <div class="card">
+                <h3>Contratante</h3>
+                <div class="info-grid" id="contrato-contratante-grid"></div>
+            </div>
+
+            <div class="card">
+                <h3>Responsável / Usuário</h3>
+                <div class="info-grid" id="contrato-responsavel-grid"></div>
+            </div>
+        </div>
+
+        <!-- Meus Backups -->
+        <div id="pagina-backups" style="display:none">
+            <h1 class="page-title">Meus Backups</h1>
+            <div class="page-subtitle">Itens configurados para serem protegidos automaticamente</div>
+            <div id="backups-lista"></div>
+            <div class="hint" style="margin-top:16px; font-size:13px; color:var(--muted); background:#f1f5f9; padding:12px 16px; border-radius:8px;">
+                Precisa alterar algum caminho, horário ou adicionar um novo item? Abra um chamado na aba "Meus Chamados".
+            </div>
+        </div>
+
+        <!-- Meus Chamados -->
+        <div id="pagina-chamados" style="display:none">
+            <div id="chamados-lista-view">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <h1 class="page-title">Meus Chamados</h1>
+                        <div class="page-subtitle">Solicitações e suporte técnico</div>
+                    </div>
+                    <button class="btn-primary" onclick="abrirModalChamado()">+ Novo Chamado</button>
+                </div>
+                <div class="card" style="padding:0;">
+                    <table>
+                        <thead><tr><th>Assunto</th><th>Categoria</th><th>Status</th><th>Aberto em</th></tr></thead>
+                        <tbody id="tbody-chamados"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="chamado-detalhe-view" style="display:none">
+                <button class="btn-secondary" onclick="voltarListaChamados()">&larr; Voltar</button>
+                <h1 class="page-title" id="chamado-detalhe-titulo" style="margin-top:14px;">-</h1>
+                <div class="page-subtitle" id="chamado-detalhe-meta">-</div>
+                <div class="card">
+                    <div class="chat-thread" id="chat-thread"></div>
+                    <div class="chat-input">
+                        <textarea id="chat-input-texto" placeholder="Escreva uma mensagem..."></textarea>
+                        <button class="btn-primary" onclick="enviarMensagemChamado()">Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meu Financeiro -->
+        <div id="pagina-financeiro" style="display:none">
+            <h1 class="page-title">Meu Financeiro</h1>
+            <div class="page-subtitle">Histórico de cobranças do seu contrato</div>
+            <div class="card" style="padding:0;">
+                <table>
+                    <thead><tr><th>Referência</th><th>Valor</th><th>Vencimento</th><th>Status</th><th>Ação</th></tr></thead>
+                    <tbody id="tbody-financeiro"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Meus Alertas -->
+        <div id="pagina-alertas" style="display:none">
+            <h1 class="page-title">Meus Alertas</h1>
+            <div class="page-subtitle">Avisos sobre a execução dos seus backups</div>
+            <div class="card">
+                <div class="empty-state">
+                    <p>Em breve: alertas automáticos de sucesso/falha de backup aparecerão aqui.</p>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Modal: novo chamado -->
+<div class="modal-overlay" id="modal-chamado" style="display:none">
+    <div class="modal-box">
+        <h3>Abrir Novo Chamado</h3>
+        <div class="form-group">
+            <label>Categoria</label>
+            <select id="ch-categoria">
+                <option>Suporte Técnico</option>
+                <option>Alteração de Backup</option>
+                <option>Financeiro</option>
+                <option>Outro</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Assunto</label>
+            <input type="text" id="ch-assunto" placeholder="Ex: Erro ao acessar o servidor">
+        </div>
+        <div class="form-group">
+            <label>Descrição</label>
+            <textarea id="ch-descricao" placeholder="Descreva sua solicitação..."></textarea>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-primary" onclick="criarChamado()">Abrir Chamado</button>
+            <button class="btn-secondary" onclick="fecharModalChamado()">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
