@@ -206,6 +206,17 @@ function mudarPagina(tab) {
         document.getElementById('pagina-' + t).style.display = (t === tab) ? 'block' : 'none';
     });
     if (tab === 'chamados') { voltarListaChamados(); carregarChamados(); }
+    fecharMenuMobile();
+}
+
+function alternarMenuMobile() {
+    document.getElementById('sidebar').classList.toggle('aberta');
+    document.getElementById('sidebar-overlay').classList.toggle('ativo');
+}
+
+function fecharMenuMobile() {
+    document.getElementById('sidebar').classList.remove('aberta');
+    document.getElementById('sidebar-overlay').classList.remove('ativo');
 }
 
 // ---------- Meu Contrato ----------
@@ -282,6 +293,31 @@ async function renderFinanceiro() {
 // ---------- Meus Chamados ----------
 const statusChamadoLabel = { aberto: "Aberto", andamento: "Em Andamento", resolvido: "Resolvido" };
 const statusChamadoClass = { aberto: "status-aberto", andamento: "status-andamento", resolvido: "status-resolvido" };
+let filtroChamadoAtual = 'ativos';
+let ultimoTotalNaoLidas = 0;
+
+function tocarSom() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine';
+        o.frequency.value = 740;
+        g.gain.setValueAtTime(0.001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+        o.start();
+        o.stop(ctx.currentTime + 0.35);
+    } catch (e) { /* navegador sem suporte a áudio, ignora */ }
+}
+
+function filtrarChamados(filtro) {
+    filtroChamadoAtual = filtro;
+    document.getElementById('filtro-ativos').classList.toggle('ativo', filtro === 'ativos');
+    document.getElementById('filtro-concluidos').classList.toggle('ativo', filtro === 'concluidos');
+    renderListaChamados();
+}
 
 function chamadoClienteTemNaoLida(ch) {
     const msgsSuporte = (ch.mensagens_chamado || []).filter(m => m.autor_tipo === 'suporte');
@@ -303,6 +339,8 @@ async function carregarChamados() {
 
     const badge = document.getElementById('badge-chamados-cliente');
     const qtdNaoLidas = chamados.filter(chamadoClienteTemNaoLida).length;
+    if (qtdNaoLidas > ultimoTotalNaoLidas) tocarSom();
+    ultimoTotalNaoLidas = qtdNaoLidas;
     if (qtdNaoLidas > 0) {
         badge.textContent = qtdNaoLidas;
         badge.style.display = 'inline-block';
@@ -310,11 +348,18 @@ async function carregarChamados() {
         badge.style.display = 'none';
     }
 
-    if (chamados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:30px;">Nenhum chamado aberto.</td></tr>`;
+    renderListaChamados();
+}
+
+function renderListaChamados() {
+    const tbody = document.getElementById('tbody-chamados');
+    const filtrados = chamados.filter(ch => filtroChamadoAtual === 'concluidos' ? ch.status === 'resolvido' : ch.status !== 'resolvido');
+
+    if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--muted); padding:30px;">Nenhum chamado ${filtroChamadoAtual === 'concluidos' ? 'concluído' : 'ativo'}.</td></tr>`;
         return;
     }
-    tbody.innerHTML = chamados.map(ch => `
+    tbody.innerHTML = filtrados.map(ch => `
         <tr class="chamado-row" onclick="abrirChamado('${ch.id}')">
             <td>${ch.assunto}${chamadoClienteTemNaoLida(ch) ? '<span class="dot-nao-lida"></span>' : ''}</td>
             <td>${ch.categoria}</td>
@@ -347,6 +392,13 @@ async function renderChamadoDetalhe() {
     document.getElementById('chamado-detalhe-titulo').textContent = ch.assunto;
     document.getElementById('chamado-detalhe-meta').innerHTML = ch.categoria + " · <span class='status " + statusChamadoClass[ch.status] + "'>" + statusChamadoLabel[ch.status] + "</span>";
 
+    const inputEl = document.getElementById('chat-input-texto');
+    const botaoEnviar = document.querySelector('#chamado-detalhe-view .chat-input .btn-primary');
+    const resolvido = ch.status === 'resolvido';
+    inputEl.disabled = resolvido;
+    botaoEnviar.disabled = resolvido;
+    inputEl.placeholder = resolvido ? 'Este chamado foi concluído. Abra um novo chamado se precisar de algo.' : 'Escreva uma mensagem...';
+
     const { data, error } = await db.from('mensagens_chamado').select('*').eq('chamado_id', chamadoAtualId).order('criado_em', { ascending: true });
     const thread = document.getElementById('chat-thread');
     if (error) {
@@ -376,6 +428,7 @@ async function enviarMensagemChamado() {
         return;
     }
     document.getElementById('chat-input-texto').value = '';
+    tocarSom();
     await renderChamadoDetalhe();
 }
 

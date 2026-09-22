@@ -18,6 +18,51 @@
     /* ---------- Layout do portal ---------- */
     #app-portal { display: flex; min-height: 100vh; }
     .sidebar { width: 220px; background: var(--sidebar); color: #cbd5e1; flex-shrink: 0; display: flex; flex-direction: column; }
+
+    .mobile-menu-toggle { display: none; }
+    .sidebar-overlay { display: none; }
+
+    @media (max-width: 780px) {
+        #app-portal { position: relative; }
+        .mobile-menu-toggle {
+            display: block;
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 40;
+            width: 42px;
+            height: 42px;
+            border-radius: 8px;
+            background: var(--sidebar);
+            color: #fff;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 39;
+            transform: translateX(-100%);
+            transition: transform 0.25s ease;
+        }
+        .sidebar.aberta { transform: translateX(0); }
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15,23,42,0.5);
+            z-index: 38;
+        }
+        .sidebar-overlay.ativo { display: block; }
+        .main-area { padding-top: 70px; }
+    }
+
+    .filtro-chamados { display: flex; gap: 8px; margin: 16px 0; }
+    .filtro-tab { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: #fff; font-size: 13px; cursor: pointer; color: var(--muted); }
+    .filtro-tab.ativo { background: var(--primary); color: #fff; border-color: var(--primary); }
     .sidebar .logo { padding: 22px 20px; font-weight: bold; color: #fff; font-size: 18px; border-bottom: 1px solid #1e293b; }
     .sidebar .logo small { display: block; font-size: 11px; color: #64748b; font-weight: normal; margin-top: 2px; }
     .sidebar nav { flex: 1; padding: 10px 0; }
