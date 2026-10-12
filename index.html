@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Haus Backup | Portal do Cliente</title>
+<title>Guardare | Portal do Cliente</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 <!-- ===================== LOGIN ===================== -->
 <div id="view-login" class="tela-central">
     <div class="aceite-box" style="max-width:380px;">
-        <div class="logo-topo">🛡️ Haus Backup<span style="display:block; font-size:12px; font-weight:normal; color:var(--muted); margin-top:4px;">Portal do Cliente</span></div>
+        <div class="logo-topo">🛡️ Guardare <span style="display:block; font-size:12px; font-weight:normal; color:var(--muted); margin-top:4px;">Portal do Cliente</span></div>
         <div class="form-group">
             <label>E-mail</label>
             <input type="email" id="login-email" placeholder="seuemail@empresa.com">
@@ -33,7 +33,7 @@
 <!-- ===================== MENSAGEM (status inesperado / cancelado / erro) ===================== -->
 <div id="view-mensagem" class="tela-central" style="display:none;">
     <div class="aceite-box" style="max-width:420px; text-align:center;">
-        <div class="logo-topo">🛡️ Haus Backup</div>
+        <div class="logo-topo">🛡️ Guardare</div>
         <p id="mensagem-texto" style="color:var(--text); font-size:14px;"></p>
         <button class="btn-secondary" onclick="fazerLogout()">Sair</button>
     </div>
@@ -41,7 +41,7 @@
 
 <!-- ===================== TELA DE ACEITE (fluxo de primeiro acesso) ===================== -->
 <div id="tela-aceite" style="display:none;">
-    <div class="logo-topo">🛡️ Haus Backup</div>
+    <div class="logo-topo">🛡️ Guardare</div>
     <div class="aceite-progress">
         <div class="step" id="prog-1"></div>
         <div class="step" id="prog-2"></div>
@@ -93,7 +93,7 @@
     <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir menu" onclick="alternarMenuMobile()">☰</button>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="fecharMenuMobile()"></div>
     <div class="sidebar" id="sidebar">
-        <div class="logo">🛡️ Haus Backup<small>Portal do Cliente</small></div>
+        <div class="logo">🛡️ Guardare<small>Portal do Cliente</small></div>
         <nav>
             <div class="nav-item active" data-tab="contrato" onclick="mudarPagina('contrato')">📄 Meu Contrato</div>
             <div class="nav-item" data-tab="backups" onclick="mudarPagina('backups')">☁️ Meus Backups</div>

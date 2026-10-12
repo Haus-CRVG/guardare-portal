@@ -18,7 +18,7 @@ function formatarDataHora(iso) {
     return new Date(iso).toLocaleString('pt-BR');
 }
 function calcularVencimento(referencia, dia) {
-    if (!referencia) return '-';
+    if (!referencia || !/^\d{2}\/\d{4}$/.test(referencia)) return '-';
     const [mes, ano] = referencia.split('/');
     const diaFmt = String(dia || 10).padStart(2, '0');
     return `${diaFmt}/${mes}/${ano}`;
@@ -229,6 +229,7 @@ function renderContrato() {
         <div class="info-item"><label>Ciclo</label><div>${meuCliente.plano_ciclo || '-'}</div></div>
         <div class="info-item"><label>Recorrência</label><div>R$ ${(parseFloat(meuCliente.plano_valor) || 0).toFixed(2)}</div></div>
         <div class="info-item"><label>Dia de Vencimento</label><div>${meuCliente.plano_dia_vencimento || '-'}</div></div>
+        ${(parseFloat(meuCliente.plano_implantacao) || 0) > 0 ? `<div class="info-item"><label>Implantação (cobrança única)</label><div>R$ ${parseFloat(meuCliente.plano_implantacao).toFixed(2)}</div></div>` : ''}
     `;
 
     document.getElementById('contrato-contratante-grid').innerHTML = `
@@ -265,6 +266,12 @@ function renderBackups() {
 }
 
 // ---------- Meu Financeiro ----------
+function formatarDataISO(iso) {
+    if (!iso) return '-';
+    const [a, m, d] = iso.slice(0, 10).split('-');
+    return `${d}/${m}/${a}`;
+}
+
 async function renderFinanceiro() {
     const { data, error } = await db.from('faturas').select('*').eq('cliente_id', meuCliente.id).order('criado_em', { ascending: false });
     const tbody = document.getElementById('tbody-financeiro');
@@ -283,9 +290,11 @@ async function renderFinanceiro() {
         <tr>
             <td>${f.referencia}</td>
             <td>R$ ${parseFloat(f.valor).toFixed(2)}</td>
-            <td>${calcularVencimento(f.referencia, meuCliente.plano_dia_vencimento)}</td>
+            <td>${f.data_vencimento ? formatarDataISO(f.data_vencimento) : calcularVencimento(f.referencia, meuCliente.plano_dia_vencimento)}</td>
             <td><span class="status ${statusClass[f.status] || ''}">${statusLabel[f.status] || f.status}</span></td>
-            <td><button class="btn-secondary" onclick="alert('Em breve: baixar a 2ª via do boleto por aqui.')">📎 2ª via</button></td>
+            <td>${f.boleto_url && f.status !== 'pago'
+                ? `<a class="btn-secondary" href="${f.boleto_url}" target="_blank" style="text-decoration:none; display:inline-block;">📎 Ver boleto / 2ª via</a>`
+                : (f.status === 'pago' ? '<span style="color:var(--muted); font-size:12px;">Quitado ✓</span>' : '<span style="color:var(--muted); font-size:12px;">Boleto em preparação</span>')}</td>
         </tr>
     `).join('');
 }
